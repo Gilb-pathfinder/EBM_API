@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  {{--
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> --}}
+  <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&display=swap" rel="stylesheet">
+  <title> {{title || 'YB VSDC Invoice'}}</title>
+  <style>
+    * {
+      font-family: "Inconsolata", monospace;
+      font-optical-sizing: auto;
+      font-weight: <weight>;
+      font-style: normal;
+      font-variation-settings:
+        "wdth" 100;
+
+      :not(sup, small) {
+        margin: 0;
+        padding: 0;
+        font-size: 10pt;
+      }
+    }
+
+
+    li {
+      list-style: none;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      padding: 5pt 10pt;
+    }
+
+    table {
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border: 1pt solid #000;
+      padding: 2.5pt;
+      text-align: left;
+    }
+
+    .no-border {
+      border: none;
+    }
+
+    .header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+
+      .image {
+        object-fit: cover;
+        border-radius: 50%;
+        width: 92px;
+        height: 92px;
+      }
+
+      .company-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1pt;
+      }
+
+      .sale-infos {
+        align-self: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .sale-infos .copy {
+        font-size: 1.7rem;
+      }
+
+      .sale-infos .refund {
+        font-size: 1.6rem;
+      }
+
+      .sale-infos .refund-invoice-no {
+        font-size: 1.2rem;
+      }
+    }
+
+    .divider {
+      width: 100%;
+      height: 0pt;
+      margin: 2pt 0;
+      border: dotted 1.4pt #706d6dcb;
+    }
+
+    .box-divider {
+      margin: 2pt 0;
+      border: dotted 1.4pt #706d6dcb;
+      border-left: none;
+      border-right: none;
+    }
+
+    .customer-infos {
+      display: flex;
+      gap: 2pt;
+      padding: 2pt 0;
+      width: 100%;
+      justify-content: space-between;
+
+      .customer-infos-list {
+        width: 65%;
+      }
+
+      .title {
+        font-weight: bold;
+      }
+
+      .refound-msg {
+        text-align: center;
+        justify-self: center;
+      }
+    }
+
+    .product-infos {
+      width: 100%;
+      margin-top: 10pt;
+
+      td {
+        text-wrap: wrap;
+        max-width: 100pt;
+      }
+    }
+
+    .total-section {
+      width: 100%;
+      display: flex;
+      justify-content: end;
+      align-items: start;
+      padding-top: 10pt;
+      padding-bottom: 2pt;
+
+      table {
+        width: fit-content;
+        margin: 0;
+
+      }
+
+      table * {
+        border: none;
+      }
+
+      tr:first-child {
+        font-weight: bold;
+      }
+
+      td:last-child {
+        text-align: right !important;
+      }
+    }
+
+    .payment {
+      display: flex;
+      flex-direction: column;
+      justify-content: right;
+      align-items: end;
+      justify-items: right;
+      text-align: right;
+      padding: 1pt 0;
+      width: 100%;
+
+      table {
+        border-top: solid 2pt black;
+        margin: 2pt 0;
+      }
+
+      td {
+        border: none;
+      }
+
+
+    }
+
+    .footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 1pt;
+      justify-content: space-between;
+
+      tr td:first-child {
+        font-weight: bold;
+      }
+    }
+
+    .promo-msg {
+      display: block;
+      color: gray;
+      text-align: center;
+      width: 100%;
+      padding-top: 5pt;
+    }
+  </style>
+</head>
+
+<body>
+  {{-- Checking Transaction Type: Sell, Refund, Copy, Proforma --}}
+  @let(isRefundTransaction = sale.receiptType == 'R')
+  @let(isCopyTransaction = sale.saleType == 'C')
+  @let(isTrainingTransaction = sale.saleType == 'T')
+  @let(isProformaTransaction = sale.saleType == 'P')
+
+  <div class="header">
+    {{-- Company Infos --}}
+    <div class="company-info">
+      <h2>{{auth.user.taxPayerName.toUpperCase() || sale.receipt.tradeName.toUpperCase()}}</h2>
+      <span> {{auth.user.province.toUpperCase()}}, {{ auth.user.district.toUpperCase()}}</span>
+      <span>{{auth.user.address}}</span>
+      @if(auth.user.postalBox)
+      <span>{{auth.user.postalBox}}</span>
+      @endif
+      <span>{{auth.user.email}}</span>
+      <span>{{auth.user.phoneNumber}}</span>
+      <span>TIN N<sup>o</sup>: {{auth.user.tin}}</span>
+    </div>
+
+    <div class="sale-infos">
+      @if(isCopyTransaction)
+      <h1 class="copy">COPY</h1>
+      @endif
+      @if(isTrainingTransaction)
+      <h2 class="refund">
+        TRAINING MODE
+      </h2>
+      @elseif(isProformaTransaction)
+      <h2 class="refund">
+        PROFORMA
+      </h2>
+      @elseif(isRefundTransaction)
+      <h2 class="refund">
+        REFUND
+      </h2>
+      <p class="refund-invoice-no">REF. NORMAL RECEIPT#: {{sale.invoiceNo}}</p>
+      @endif
+    </div>
+
+    <div class="header-extra-infos">
+      @if(auth.user.image)
+      <img class="image" src="{{appUrl}}{{ auth.user.image.url   }}" loading="eager" />
+      @elseif(auth.user.imageLink)
+      <img class="image" src="{{ auth.user.imageLink  }}" loading="eager" />
+      @endif
+    </div>
+  </div>
+
+  <hr class="divider" />
+  @if(sale.receipt.topMessage)
+  <h3 style="text-align: center;">{{sale.receipt.topMessage}}</h3>
+  <hr class="divider" />
+  @endif
+
+  {{-- Custommer Infos --}}
+  <div class="customer-infos">
+    <ul class="customer-infos-list">
+      @if(sale.customerName)
+      <li>
+        <span class="title">Customer Name:</span>
+        <span> {{sale.customerName}}</span>
+      </li>
+      @endif
+      @if(sale.customerTin)
+      <li>
+        <span class="title">Customer Tin N<sup>o</sup>: </span>
+        <span>{{sale.customerTin}}</span>
+      </li>
+      @endif
+
+      @if(sale.customerTin)
+      <li>
+        <span class="title">Customer Tin N<sup>o</sup>: </span>
+        <span>{{sale.customerTin}}</span>
+      </li>
+      @endif
+
+      @if(sale.receipt.customerMobileNo)
+      <li>
+        <span class="title">Customer Mobile N<sup>o</sup>: </span>
+        <span>{{sale.receipt.customerMobileNo}}</span>
+      </li>
+      @endif
+    </ul>
+    @if(isRefundTransaction)
+    <p class="refound-msg">
+      REFUND IS APPROVED ONLY<br>
+      FOR ORIGINAL SALES RECEIPT
+    </p>
+    @endif
+  </div>
+  {{-- Product Infos --}}
+  <table class="product-infos">
+    <thead>
+      @let(hasProductExpiry = sale.items.data.find(i => i.expirationDate))
+      @let(hasExtraHeaders = !!sale.extraHeaders && sale.extraHeaders.length > 0)
+      <tr>
+        <th>N<sup>o</sup></th>
+
+        {{-- Adding Extra Header to table if exist --}}
+        @if(hasExtraHeaders)
+        @each(header in sale.extraHeaders)
+        <th>{{capitalCase(camelCase(header))}}</th>
+        @end
+        @endif
+        <th>Product</th>
+        <th>Batch</th>
+        @if(hasProductExpiry)
+        <th>Expiry</th>
+        @endif
+        <th>Pkg.</th>
+        <th>Tax Des.</th>
+        <th>Qty.</th>
+        <th>Price</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      @each(item in sale.items.data)
+      <tr>
+        <td>
+          {{item.sequenceNo}}
+        </td>
+        {{-- Adding Extra Value to table if exist --}}
+        @if(hasExtraHeaders)
+        @each(header in sale.extraHeaders)
+        <th>{{item.extra[header]}}</th>
+        @end
+        @endif
+        <td>
+          {{item.name}}
+          @if(item.discountAmount > 0)
+          <br>
+          discount -{{item.discountRate}}%
+          -{{item.discountAmount}}
+          @end
+        </td>
+        <td>{{item.barcode || ''}}</td>
+        @if(hasProductExpiry)
+        <td>{{item.expirationDate || ''}}</td>
+        @endif
+        <td>{{item.packageUnit}}</td>
+        <td>{{getEbmTaxName(item.taxationType)}}</td>
+        <td>{{item.quantity}}</td>
+        <td>{{item.price}}</td>
+        <td>
+          {{isRefundTransaction ? '-' : ''}}{{item.taxableAmount}}
+        </td>
+      </tr>
+
+      @end
+    </tbody>
+  </table>
+
+  {{-- Copy warning Message --}}
+  @if(isCopyTransaction || isTrainingTransaction || isProformaTransaction)
+  <h3 class="box-divider" style="text-align: center; font-size: 1rem; padding: 2pt;">THIS IS NOT AN OFFICIAL RECEIPT
+  </h3>
+  @endif
+
+  <div class="total-section">
+    <table>
+      <tr>
+        <td>Total</td>
+        <td>{{isRefundTransaction ? '-' : ''}}{{sale.totalTaxableAmount}}</td>
+      </tr>
+      @if(sale.taxableAmountA > 0)
+      <tr>
+        <td>Total {{getEbmTaxName('A')}}</td>
+        <td>{{isRefundTransaction ? '-' : ''}}{{sale.taxableAmountA}}</td>
+      </tr>
+      @endif
+      @if(sale.taxableAmountB > 0)
+      <tr>
+        <td>Total {{getEbmTaxName('B')}}</td>
+        <td>{{isRefundTransaction ? '-' : ''}}{{sale.taxableAmountB}}</td>
+      </tr>
+      <tr>
+        <td>Total Tax B</td>
+        <td>{{isRefundTransaction ? '-' : ''}}{{sale.taxAmountB}}</td>
+      </tr>
+      @endif
+      @if(sale.taxableAmountC > 0)
+      <tr>
+        <td>Total {{getEbmTaxName('C')}}</td>
+        <td>{{isRefundTransaction ? '-' : ''}}{{sale.taxableAmountC}}</td>
+      </tr>
+      <tr>
+        <td>Total Tax C</td>
+        <td>{{isRefundTransaction ? '-' : ''}}{{sale.taxAmountC}}</td>
+      </tr>
+      @endif
+      @if(sale.taxableAmountD > 0)
+      <tr>
+        <td>Total {{getEbmTaxName('D')}}</td>
+        <td>{{isRefundTransaction ? '-' : ''}}{{sale.taxableAmountD}}</td>
+      </tr>
+      <tr>
+        <td>Total Tax D</td>
+        <td>{{isRefundTransaction ? '-' : ''}}{{sale.taxAmountD}}</td>
+      </tr>
+      @endif
+      <tr>
+        <td>Total Tax</td>
+        <td>{{isRefundTransaction ? '-' : ''}}{{sale.totalTaxAmount}}</td>
+      </tr>
+    </table>
+
+  </div>
+  <div class="payment">
+    <table>
+      <tbody>
+        <tr>
+          <td>{{getEbmPaymentMethodDescription(sale.paymentMethod)}}</td>
+          <td style="text-align: end;">{{isRefundTransaction ? '-' : ''}}{{sale.totalTaxableAmount}}</td>
+        </tr>
+        <tr>
+        <tr>
+          <td>ITEMS NUMBER</td>
+          <td style="text-align: end;">{{sale.totalItems}}</td>
+        </tr>
+        <tr>
+      </tbody>
+    </table>
+  </div>
+
+  {{-- Copy warning Message --}}
+  @if(isCopyTransaction)
+  <h3 class="box-divider" style="text-align: center; font-size: 1rem; padding: 2pt;">COPY</h3>
+  @elseif(isTrainingTransaction || isProformaTransaction)
+  <h3 class="box-divider" style="text-align: center; font-size: 1rem; padding: 2pt;">{{isTrainingTransaction ? 'TRAINING MODE' | 'PROFORMA'}}</h3>
+  @else
+  <hr class="divider" style="margin-top: 6pt;" />
+  @endif
+  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+    <img src="{{appUrl}}/images/rra_logo_1.png" width="42" height="42">
+    <h3 style="text-align: center;">SDC INFORMATIONS</h3>
+    <img src="{{appUrl}}/images/rra_logo_1.png" width="42" height="42">
+  </div>
+  <hr class="divider" />
+
+  <footer class="footer">
+    <table class="sdc-infos">
+      <tbody>
+        @let(ebmDt = splitEbmDateTime(sale.ebmSaleData.vsdcRcptPbctDate))
+        <tr>
+          <td>DATE</td>
+          <td>{{ebmDt.date}}</td>
+        </tr>
+        <tr>
+          <td>TIME</td>
+          <td>{{ebmDt.time}}</td>
+        </tr>
+        <tr>
+          <td>SRC ID</td>
+          <td>{{sale.ebmSaleData.sdcId}}</td>
+        </tr>
+        <tr>
+          <td>RECEIPT NUMBER</td>
+          <td>{{sale.ebmSaleData.rcptNo}}/{{sale.ebmSaleData.totRcptNo}} {{sale.saleType}}{{sale.receiptType}}</td>
+        </tr>
+
+        @if(!isTrainingTransaction || !isProformaTransaction)
+        <tr>
+          @let(intrlData = splitEveryFourChars(sale.ebmSaleData.intrlData))
+          <td>INTERNAL DATA</td>
+          <td>{{intrlData}}</td>
+        </tr>
+        <tr>
+          @let(rcptSign = splitEveryFourChars(sale.ebmSaleData.rcptSign))
+          <td>SIGNATURE</td>
+          <td>{{(rcptSign)}}</td>
+        </tr>
+        @endif
+      </tbody>
+
+    </table>
+
+    @if(!isTrainingTransaction)
+    <img src="https://api.qrserver.com/v1/create-qr-code/?data={{encodeEbmSaleForQRCode({
+      ebmDt,
+      sdcId: sale.ebmSaleData.sdcId,
+      rcptNo: sale.ebmSaleData.rcptNo,
+      intrlData,
+      rcptSign
+    })}}&size=100x100" width="100" height="100">
+    @endif
+
+    <hr class="divider" />
+    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+      <img src="{{appUrl}}/images/yb_group_logo.png" width="42" height="42">
+      <h3 style="text-align: center;">CIS INFORMATIONS</h3>
+      <img src="{{appUrl}}/images/yb_group_logo.png" width="42" height="42">
+    </div>
+    <hr class="divider" />
+
+    <table>
+      <tr>
+        <td>RECEIPT NUMBER</td>
+        <td>{{sale.invoiceNo}}</td>
+      </tr>
+      @let(cisDt = formatEbmCisDateTime(sale.createdAt || sale.createdAt))
+      <tr>
+        <td>DATE</td>
+        <td>{{cisDt.date}}</td>
+      </tr>
+      <tr>
+        <td>TIME</td>
+        <td>{{cisDt.time}}</td>
+      </tr>
+      <tr>
+        <td>MRC</td>
+        <td>{{auth.user.mrc}}</td>
+      </tr>
+    </table>
+
+  </footer>
+
+
+  <hr class="divider" />
+  @if(sale.receipt.bottomMessage)
+  <h3 style="text-align: center;">{{sale.receipt.bottomMessage}}</h3>
+  @endif
+  <small class="promo-msg">Generated by YB VSDC API (call: {{appPhoneNumber}})(visist: {{appUrl}})</small>
+</body>
+
+</html>

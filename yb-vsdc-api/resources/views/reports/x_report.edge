@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{title || 'X Intraday Report - CIS'}}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-size: 12pt; }
+    body { font-family: 'Times New Roman', Arial, sans-serif; margin: 10pt; color: #000; }
+    h1, h2 { text-align: center; margin: 0; }
+    .header, .section, .totals, .footer { margin-top: 5pt; }
+    .row { display: flex; justify-content: space-between; margin: 1pt 0; }
+    .section-title { font-weight: bold; margin-top: 8pt; border-bottom: 1px solid #000; padding-bottom: 2pt; }
+    .totals-table, .summary-table { width: 100%; border-collapse: collapse; margin-top: 5pt; }
+    .totals-table th, .totals-table td, .summary-table th, .summary-table td { border: 1pt solid #000; padding: 2pt; text-align: left; }
+    button#printBtn { display: block; margin: 5pt auto; padding: 3pt 6pt; font-size: 12pt; cursor: pointer; }
+    header * { font-size: 18pt!important; }
+    @media print { button#printBtn { display: none; } }
+  </style>
+</head>
+<body>
+  <header>
+      @if(auth.user.image)
+      <img class="image" src="{{appUrl}}{{ auth.user.image.url   }}" loading="eager" />
+      @elseif(auth.user.imageLink)
+      <img class="image" src="{{ auth.user.imageLink  }}" loading="eager" />
+      @endif
+      <h1>X Intraday Report</h1>
+  </header>
+
+  <button id="printBtn" onclick="window.print()">Print Report</button>
+
+  <div class="header">
+    <div class="row"><strong>Trade Name:</strong> <span>{{auth.user.taxPayerName}}</span></div>
+    <div class="row"><strong>TIN:</strong> <span>{{auth.user.tin}}</span></div>
+    <div class="row"><strong>Date & Time:</strong> <span>{{dateTime}}</span></div>
+    <div class="row"><strong>CIS:</strong> <span>YB VSDC</span></div>
+    <div class="row"><strong>MRC:</strong> <span>{{auth.user.mrc}}</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Sales Summary (Intraday)</div>
+    <div class="row"><strong>Total NS Sales (Incl. Tax):</strong> <span>RWF {{saleSummury.totalAmount}}</span></div>
+    @if(+saleSummury.taxableAmountA > 0)
+    <div class="row" style="padding-left:12pt;"><span>A-EX</span> <span>RWF {{(+saleSummury.taxableAmountA + +saleSummury.taxAmountA).toFixed(2)}}</span></div>
+    @endif
+    @if(+saleSummury.taxableAmountB > 0)
+    <div class="row" style="padding-left:12pt;"><span>B-18%</span> <span>RWF {{(+saleSummury.taxableAmountB + +saleSummury.taxAmountB).toFixed(2)}}</span></div>
+    @endif
+    @if(+saleSummury.taxableAmountC > 0)
+    <div class="row" style="padding-left:12pt;"><span>C</span> <span>RWF {{(+saleSummury.taxableAmountC + +saleSummury.taxAmountC).toFixed(2)}}</span></div>
+    @endif
+    @if(+saleSummury.taxableAmountD > 0)
+    <div class="row" style="padding-left:12pt;"><span>D</span> <span>RWF {{(+saleSummury.taxableAmountD + +saleSummury.taxAmountD).toFixed(2)}}</span></div>
+    @endif
+    <div class="row"><strong>Number of NS Receipts:</strong> <span>{{saleSummury.totalReceipt}}</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Refunds (Intraday)</div>
+    <div class="row"><strong>Total NR Refunds (Incl. Tax):</strong> <span>RWF {{refundSummury.totalAmount}}</span></div>
+    <div class="row"><strong>Number of NR Receipts:</strong> <span>{{refundSummury.totalReceipt}}</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Tax Breakdown</div>
+    <table class="totals-table">
+      <thead>
+        <tr>
+          <th>Tax Rate</th>
+          <th>NS Taxable</th>
+          <th>NS Tax</th>
+          <th>NR Taxable</th>
+          <th>NR Tax</th>
+        </tr>
+      </thead>
+      <tbody>
+         @if(+saleSummury.taxableAmountA > 0)
+        <tr>
+          <td>A</td>
+          <td>RWF {{saleSummury.taxableAmountA}}</td>
+          <td>RWF {{saleSummury.taxAmountA}}</td>
+          <td>RWF {{refundSummury.taxableAmountA}}</td>
+          <td>RWF {{refundSummury.taxAmountA}}</td>
+        </tr>
+        @endif
+        <tr>
+          <td>B-18%</td>
+          <td>RWF {{saleSummury.taxableAmountB}}</td>
+          <td>RWF {{saleSummury.taxAmountB}}</td>
+          <td>RWF {{refundSummury.taxableAmountB}}</td>
+          <td>RWF {{refundSummury.taxAmountB}}</td>
+        </tr>
+        @if(+saleSummury.taxableAmountC > 0)
+        <tr>
+          <td>C</td>
+          <td>RWF {{saleSummury.taxableAmountC}}</td>
+          <td>RWF {{saleSummury.taxAmountC}}</td>
+          <td>RWF {{refundSummury.taxableAmountC}}</td>
+          <td>RWF {{refundSummury.taxAmountC}}</td>
+        </tr>
+        @endif
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Operational Summary</div>
+    <div class="row"><strong>Opening Deposit:</strong> <span>RWF {{openingDeposit}}</span></div>
+    <div class="row"><strong>Number of Items Sold:</strong> <span>{{saleSummury.totalItems - refundSummury.totalItems}}</span></div>
+    <div class="row"><strong>CS/CR Receipt Copies:</strong> <span>{{copySummury.totalReceipt}} (RWF {{copySummury.totalAmount}})</span></div>
+    <div class="row"><strong>TS/TR Training Receipts:</strong> <span>{{trainingSummury.totalReceipt}} (RWF {{trainingSummury.totalAmount}})</span></div>
+    <div class="row"><strong>PS Proforma Receipts:</strong> <span>{{proformaSummury.totalReceipt}} (RWF {{proformaSummury.totalAmount}})</span></div>
+    <div class="row"><strong>Incomplete Sales:</strong> <span>{{incompleteSales}}</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Payment Summary</div>
+    <table class="totals-table">
+      <thead>
+        <tr>
+          <th>Payment Method</th>
+          <th>NS Sales</th>
+          <th>NR Refunds</th>
+        </tr>
+      </thead>
+      <tbody>
+        @each((payment, index) in paymentSummaries)
+        <tr>
+          <td>{{index}}</td>
+          <td>{{payment['NS']?.totalReceipt}} (RWF {{payment['NS']?.totalAmount}})</td>
+          <td>{{payment['NR']?.totalReceipt || 0}} (RWF {{payment['NR']?.totalAmount || 0}})</td>
+        </tr>
+        @end
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">NS Sales by Item Classification Group (F-51)</div>
+    <table class="totals-table">
+      <thead>
+        <tr>
+          <th>Item Classification Group</th>
+          <th>Total Amount</th>
+          <th>Tax Amount</th>
+          <th>Quantity</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if(!itemGroupSales || Object.keys(itemGroupSales).length === 0)
+        <tr>
+          <td colspan="4" style="text-align:center;">No item sales by group</td>
+        </tr>
+        @else
+          @each((group, groupName) in itemGroupSales)
+          <tr>
+            <td>{{groupName}}</td>
+            <td>RWF {{parseFloat(group.amount).toFixed(2)}}</td>
+            <td>RWF {{parseFloat(group.taxAmount).toFixed(2)}}</td>
+            <td>{{parseFloat(group.quantity).toFixed(0)}}</td>
+          </tr>
+          @end
+        @end
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Adjustments</div>
+    <div class="row"><strong>All Discounts:</strong> <span>RWF {{allDiscount}}</span></div>
+  </div>
+
+  <div class="footer">
+    <p style="text-align:center; font-size: 10pt; margin-top: 50px;">
+      CIS v{{auth.user.cisApiVersion}}, power by RRA VSDC EBM {{auth.user.ebmApiVersion}}
+      <br>
+      <small style="font-size: 6pt">YB VSDC API - X REPORT</small>
+    </p>
+  </div>
+</body>
+</html>

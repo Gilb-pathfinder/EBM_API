@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{title || 'Electronic Journal - CIS'}}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-size: 10pt; }
+    body { font-family: 'Courier New', Courier, monospace; margin: 20pt; color: #000; }
+    h1 { text-align: center; margin-bottom: 20pt; font-size: 16pt; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #000; padding: 4pt; text-align: left; }
+    th { background-color: #eee; }
+    .footer { margin-top: 30pt; text-align: center; font-size: 8pt; }
+    @media print { #printBtn { display: none; } }
+    button#printBtn { display: block; margin: 10pt auto; padding: 5pt 10pt; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Electronic Journal (EJ) - EBM Authoritative Data</h1>
+  <p style="text-align:center;">Period: {{dateTime}}</p>
+  <p style="text-align:center;font-size:8pt;color:#666;">F-48: Data fetched from EBM via delta sync (lastReqDt parameter)</p>
+
+  <button id="printBtn" onclick="window.print()">Print Journal</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date/Time</th>
+        <th>Receipt No</th>
+        <th>Amount</th>
+        <th>Tax</th>
+        <th>Total</th>
+        <th>Payment Method</th>
+        <th>Reference</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if(!transactions || transactions.length === 0)
+      <tr>
+        <td colspan="7" style="text-align:center;">No transactions found for the selected period</td>
+      </tr>
+      @else
+        @each(transaction in transactions)
+        <tr>
+          <td>{{ transaction.transactionDate }} {{ transaction.transactionTime }}</td>
+          <td>{{ transaction.receiptNo }}</td>
+          <td>{{ parseFloat(transaction.amount).toLocaleString('en', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</td>
+          <td>{{ parseFloat(transaction.taxAmount).toLocaleString('en', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</td>
+          <td>{{ parseFloat(transaction.totalAmount).toLocaleString('en', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</td>
+          <td>{{ transaction.paymentMethod }}</td>
+          <td>{{ transaction.customer || transaction.reference || 'N/A' }}</td>
+        </tr>
+        @end
+      @end
+    </tbody>
+  </table>
+
+  <div class="footer">
+    EJ Report (F-48) - Data Source: EBM (Rwanda Revenue Authority) - CIS v{{auth.user.cisApiVersion}} - Generated at {{ new Date().toLocaleString() }}
+  </div>
+</body>
+</html>

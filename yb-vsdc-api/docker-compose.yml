@@ -1,0 +1,44 @@
+services:
+  pharmasix:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+
+    ports:
+      - '${PORT:-3333}:3333'
+
+    environment:
+      - TZ=${TZ}
+      - PORT=${PORT}
+      - HOST=${HOST}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - APP_KEY=${APP_KEY}
+      - NODE_ENV=${NODE_ENV}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE=${DB_DATABASE}
+      - BASE_URL=${BASE_URL}
+      - APP_PHONE_NUMBER=${APP_PHONE_NUMBER}
+      - EBM_SANDBOX_TIN=${EBM_SANDBOX_TIN}
+      - EBM_SANDBOX_BHF_ID=${EBM_SANDBOX_BHF_ID}
+      - EBM_SANDBOX_MRC=${EBM_SANDBOX_MRC}
+      - EBM_SANDBOX_SRL_NO=${EBM_SANDBOX_SRL_NO}
+      - EBM_BASE_URL=${EBM_BASE_URL}
+      - EBM_API_VERSION=${EBM_API_VERSION}
+      - EBM_TAX_RATE_A=${EBM_TAX_RATE_A}
+      - EBM_TAX_RATE_B=${EBM_TAX_RATE_B}
+      - EBM_TAX_RATE_C=${EBM_TAX_RATE_C}
+      - EBM_TAX_RATE_D=${EBM_TAX_RATE_D}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_FULL_NAME=${ADMIN_FULL_NAME}
+      - DRIVE_DISK=${DRIVE_DISK}
+      - R2_KEY=${R2_KEY}
+      - R2_SECRET=${R2_SECRET}
+      - R2_BUCKET=${R2_BUCKET}
+      - R2_ENDPOINT=${R2_ENDPOINT}
+      - MY_RRA_PURCHASE_CODE_DEV=${MY_RRA_PURCHASE_CODE_DEV}
+      - MY_RRA_PURCHASE_CODE=${MY_RRA_PURCHASE_CODE}
+   

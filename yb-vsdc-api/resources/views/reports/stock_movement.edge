@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{title || 'Stock Movement Report - CIS'}}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-size: 10pt; }
+    body { font-family: Arial, sans-serif; margin: 20pt; }
+    h1 { text-align: center; margin-bottom: 20pt; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 6pt; text-align: left; }
+    th { background-color: #f4f4f4; }
+    .type-01 { color: green; } /* Incoming */
+    .type-02 { color: green; }
+    .type-11 { color: red; }   /* Outgoing */
+    .type-12 { color: red; }
+    @media print { #printBtn { display: none; } }
+    button#printBtn { display: block; margin: 10pt auto; padding: 5pt 10pt; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Stock Movement Report</h1>
+  <p style="text-align:center;">Period: {{dateTime}}</p>
+
+  <button id="printBtn" onclick="window.print()">Print Report</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Remark</th>
+        <th>Items</th>
+        <th style="text-align:right;">Total Qty</th>
+        <th style="text-align:right;">Total Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      @each(mov in movements)
+      <tr>
+        <td>{{ mov.createdAt.toFormat('dd/MM/yyyy HH:mm') }}</td>
+        <td class="type-{{mov.storedAndReleasedType}}">{{ mov.storedAndReleasedType }}</td>
+        <td>{{ mov.remark || '' }}</td>
+        <td>
+           @each(item in mov.items.data)
+             {{item.name}} ({{item.quantity}}),
+           @end
+        </td>
+        <td style="text-align:right;">{{ mov.totalItem }}</td>
+        <td style="text-align:right;">{{ mov.totalAmount.toLocaleString() }}</td>
+      </tr>
+      @end
+    </tbody>
+  </table>
+  <div style="margin-top: 20pt; text-align: center; font-size: 8pt; color: #777;">
+    Stock Movement - CIS v{{auth.user.cisApiVersion}} - Generated at {{ new Date().toLocaleString() }}
+  </div>
+</body>
+</html>

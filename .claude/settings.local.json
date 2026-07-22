@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node ace *)",
+      "Bash(curl -s http://localhost:8000/config/tax)",
+      "PowerShell(node -e \"const m = require\\('c:/xampp/htdocs/ybgroup/tmp-pdf/node_modules/pdf-parse/dist/node/cjs/index.cjs'\\); console.log\\(Object.keys\\(m\\)\\)\")",
+      "PowerShell(node \"c:\\\\xampp\\\\htdocs\\\\ybgroup\\\\tmp-pdf\\\\node_modules\\\\pdf-parse\\\\bin\\\\cli.mjs\" --file \"c:\\\\xampp\\\\htdocs\\\\ybgroup\\\\VSDC SPECIFICATION DOCUMENT v1.0.5___2023-05-16_.pdf\" 2>&1)",
+      "PowerShell(sc qc Tomcat11 2>&1)"
+    ]
+  }
+}

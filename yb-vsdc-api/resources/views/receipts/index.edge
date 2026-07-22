@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&display=swap" rel="stylesheet">
+  <title>{{title || 'YB VSDC Invoice'}}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Inconsolata", monospace; font-size: 9pt; }
+    body { padding: 8pt 14pt; }
+    table { border-collapse: collapse; }
+    th, td { border: 1pt solid #000; padding: 2.5pt 4pt; text-align: left; }
+    sup { font-size: 7pt; }
+    small { font-size: 7.5pt; }
+
+    /* Dividers */
+    .div-single { border: none; border-top: 1pt solid #000; margin: 4pt 0; height: 0; }
+    .div-double { border: none; border-top: 3pt double #000; margin: 3pt 0; height: 0; }
+
+    /* ========== A4 NORMAL INVOICE ========== */
+    .a4-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6pt; }
+    .a4-header-logo { width: 80pt; height: 80pt; object-fit: contain; }
+    .a4-header-logo-placeholder { width: 80pt; height: 80pt; border: 1pt dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 7.5pt; color: #aaa; text-align: center; }
+    .a4-company-center { text-align: center; margin: 4pt 0 6pt; }
+    .a4-company-center .name { font-weight: bold; font-size: 11pt; }
+    .a4-invoice-boxes { display: flex; gap: 8pt; margin: 6pt 0; }
+    .a4-box { border: 1pt solid #000; padding: 4pt 6pt; }
+    .a4-box-left { flex: 1; }
+    .a4-box-left .box-title { text-decoration: underline; font-weight: bold; margin-bottom: 2pt; }
+    .a4-box-right { min-width: 190pt; }
+    .a4-items { width: 100%; margin: 8pt 0; }
+    .a4-items th, .a4-items td { font-size: 8.5pt; }
+    .a4-items td.right, .a4-items th.right { text-align: right; }
+    .a4-footer { display: flex; justify-content: space-between; align-items: flex-start; gap: 10pt; margin-top: 10pt; }
+    .a4-footer-sdc { flex: 1; font-size: 7.5pt; line-height: 1.5; }
+    .a4-footer-sdc .sdc-title { font-weight: bold; font-size: 8pt; }
+    .a4-footer-sdc .sdc-sep { border-top: 1pt solid #999; margin: 2pt 0; }
+    .a4-footer-totals { }
+    .a4-totals-table { width: auto; }
+    .a4-totals-table td { border: none; border-bottom: 1pt solid #000; padding: 2pt 6pt; font-size: 8.5pt; }
+    .a4-totals-table td:last-child { text-align: right; min-width: 70pt; }
+    .a4-totals-table tr:first-child td { font-weight: bold; }
+    .a4-payment-table { width: auto; margin-top: 4pt; border-top: 2pt solid #000; }
+    .a4-payment-table td { border: none; padding: 2pt 6pt; font-size: 8.5pt; }
+    .a4-payment-table td:last-child { text-align: right; min-width: 70pt; font-weight: bold; }
+
+    /* ========== COPY / REFUND STYLE ========== */
+    .cr-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .cr-header-company { font-size: 9pt; line-height: 1.5; }
+    .cr-header-company .cr-company-name { font-weight: bold; font-size: 10.5pt; }
+    .cr-header-title { text-align: center; flex: 1; padding: 0 10pt; }
+    .cr-title-copy { font-size: 20pt; font-weight: bold; line-height: 1; }
+    .cr-title-main { font-size: 18pt; font-weight: bold; line-height: 1.1; }
+    .cr-title-ref { font-size: 10pt; margin-top: 2pt; }
+    .cr-header-logo img { width: 80pt; height: 80pt; object-fit: contain; border-radius: 50%; }
+    .cr-customer { display: flex; justify-content: space-between; align-items: flex-start; padding: 4pt 0; font-size: 9pt; }
+    .cr-refund-msg { text-align: right; font-weight: bold; font-size: 8.5pt; line-height: 1.4; }
+    .cr-items { width: 100%; }
+    .cr-items th, .cr-items td { font-size: 8.5pt; }
+    .cr-not-official { text-align: center; font-weight: bold; font-size: 9pt; padding: 3pt 0; border-top: 1pt solid #000; border-bottom: 1pt solid #000; margin: 4pt 0; }
+    .cr-totals { display: flex; justify-content: flex-end; padding: 4pt 0; }
+    .cr-totals-table { width: auto; }
+    .cr-totals-table td { border: none; padding: 1.5pt 8pt; font-size: 9pt; }
+    .cr-totals-table td:last-child { text-align: right; min-width: 90pt; }
+    .cr-totals-table .row-bold td { font-weight: bold; }
+    .cr-totals-table .row-sep td { border-top: 1pt solid #000; padding-top: 3pt; }
+    .cr-section-header { display: flex; justify-content: space-between; align-items: center; padding: 2pt 0; }
+    .cr-section-header h3 { text-align: center; flex: 1; font-size: 10pt; }
+    .cr-section-header img { width: 40pt; height: 40pt; object-fit: contain; }
+    .cr-sdc-wrap { display: flex; justify-content: space-between; align-items: flex-start; gap: 8pt; margin: 4pt 0; }
+    .cr-sdc-table { width: auto; }
+    .cr-sdc-table td { border: 1pt solid #000; padding: 2pt 5pt; font-size: 8.5pt; }
+    .cr-sdc-table td:first-child { font-weight: bold; width: 110pt; }
+    .cr-center-label { text-align: center; font-weight: bold; font-size: 11pt; padding: 2pt 0; }
+    .cr-promo { text-align: center; color: #666; font-size: 7.5pt; margin-top: 4pt; }
+
+    /* ========== THERMAL / ROLL ========== */
+    .roll-body * { font-size: 8pt !important; }
+    .roll-header { text-align: center; margin-bottom: 4pt; }
+    .roll-divider { border: none; border-top: 1pt dashed #000; margin: 3pt 0; height: 0; }
+    .roll-items { width: 100%; }
+    .roll-items th, .roll-items td { font-size: 7.5pt !important; padding: 1.5pt 2pt; }
+    .roll-totals { width: 100%; }
+    .roll-totals td { border: none; font-size: 8pt !important; padding: 1pt 3pt; }
+    .roll-totals td:last-child { text-align: right; }
+    .roll-totals .row-sep td { border-top: 1pt solid #000; }
+  </style>
+</head>
+
+<body>
+  @let(isRefundTransaction = sale.receiptType == 'R')
+  @let(isCopyTransaction = sale.saleType == 'C')
+  @let(isTrainingTransaction = sale.saleType == 'T')
+  @let(isProformaTransaction = sale.saleType == 'P')
+  @let(isRoll = paperSize === 'Roll')
+  @let(isCopyRefundStyle = !isRoll && (isCopyTransaction || isRefundTransaction))
+  @let(isA4Normal = !isRoll && !isCopyTransaction && !isRefundTransaction)
+
+
+  {{-- ================================================================ --}}
+  {{-- A4 NORMAL / TRAINING / PROFORMA INVOICE                          --}}
+  {{-- ================================================================ --}}
+  @if(isA4Normal)
+
+  {{-- Three-logo header --}}
+  <div class="a4-header">
+    <img class="a4-header-logo" src="{{appUrl}}/images/rra_logo_1.png">
+    <div>
+      @if(auth.user.image)
+        <img class="a4-header-logo" src="{{appUrl}}{{auth.user.image.url}}" style="border-radius:50%;object-fit:cover;">
+      @elseif(auth.user.imageLink)
+        <img class="a4-header-logo" src="{{auth.user.imageLink}}" style="border-radius:50%;object-fit:cover;">
+      @else
+        <div class="a4-header-logo-placeholder">Company Logo,<br>if any</div>
+      @endif
+    </div>
+    <img class="a4-header-logo" src="{{appUrl}}/images/rra_logo_2.png">
+  </div>
+
+  {{-- Centered company info --}}
+  <div class="a4-company-center">
+    <div class="name">{{auth.user.taxPayerName.toUpperCase()}}</div>
+    <div>{{auth.user.province.toUpperCase()}}, {{auth.user.district.toUpperCase()}}</div>
+    @if(auth.user.address)<div>{{auth.user.address}}</div>@endif
+    <div>TEL : {{auth.user.phoneNumber || ''}} &nbsp; EMAIL : {{auth.user.email || ''}} &nbsp; TIN: {{auth.user.tin}}</div>
+  </div>
+
+  @if(sale.receipt && sale.receipt.topMessage)
+  <div style="text-align:center;font-weight:bold;margin:3pt 0;">{{sale.receipt.topMessage}}</div>
+  @endif
+
+  @if(isTrainingTransaction)
+  <div style="text-align:center;font-weight:bold;font-size:13pt;margin:4pt 0;">TRAINING MODE</div>
+  @elseif(isProformaTransaction)
+  <div style="text-align:center;font-weight:bold;font-size:13pt;margin:4pt 0;">PROFORMA</div>
+  @endif
+
+  <hr class="div-single">
+
+  {{-- Invoice To | Invoice No & Date boxes --}}
+  @let(sdcDt = sale.ebmSaleData ? splitEbmDateTime(sale.ebmSaleData.vsdcRcptPbctDate) : null)
+  <div class="a4-invoice-boxes">
+    <div class="a4-box a4-box-left">
+      <div class="box-title">INVOICE TO</div>
+      @if(sale.customerTin)<div>Tin: {{sale.customerTin}}</div>@endif
+      @if(sale.customerName)<div>Names: {{sale.customerName}}</div>@endif
+      @if(sale.receipt && sale.receipt.customerMobileNo)<div>Phone: {{sale.receipt.customerMobileNo}}</div>@endif
+    </div>
+    <div class="a4-box a4-box-right">
+      <div>INVOICE NO : {{sale.invoiceNo}}</div>
+      @if(sdcDt)<div>Date : {{sdcDt.date}} {{sdcDt.time}}</div>@endif
+    </div>
+  </div>
+
+  {{-- Items table --}}
+  @let(hasExtraHeaders = !!sale.extraHeaders && sale.extraHeaders.length > 0)
+  <table class="a4-items">
+    <thead>
+      <tr>
+        <th style="width:18pt;">No</th>
+        <th>Item code</th>
+        <th>Item Description</th>
+        <th class="right" style="width:30pt;">Qty</th>
+        <th style="width:22pt;">Tax</th>
+        <th class="right">Unit Price</th>
+        <th class="right">Total Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      @each(item in sale.items.data)
+      <tr>
+        <td>{{item.sequenceNo}}</td>
+        <td style="font-size:7.5pt;">{{item.barcode || (hasExtraHeaders ? item.extra[sale.extraHeaders[0]] : '')}}</td>
+        <td>
+          {{item.name}}
+          @if(item.discountRate > 0)
+          <br><small>discount -{{item.discountRate}}% -{{item.discountAmount}}</small>
+          @endif
+        </td>
+        <td class="right">{{item.quantity}}</td>
+        <td>{{item.taxationType}}</td>
+        <td class="right">{{item.price}}</td>
+        <td class="right">
+          {{item.quantity * item.price}}<br>{{item.taxableAmount}}
+        </td>
+      </tr>
+      @end
+    </tbody>
+  </table>
+
+  {{-- A4 Bottom: SDC text | QR | Totals --}}
+  <div class="a4-footer">
+
+    {{-- SDC text block (left) --}}
+    <div class="a4-footer-sdc">
+      <div class="sdc-title">SDC INFORMATION</div>
+      <hr class="sdc-sep">
+      @if(sdcDt)
+      <div>Date : {{sdcDt.date}} time: {{sdcDt.time}}</div>
+      <div>SDC ID : {{sale.ebmSaleData.sdcId}}</div>
+      <div>RECEIPT NUMBER : {{sale.ebmSaleData.rcptNo}}/{{sale.ebmSaleData.totRcptNo}} ({{sale.saleType}}{{sale.receiptType}})</div>
+      @if(!isTrainingTransaction && !isProformaTransaction)
+      @let(intrlData = splitEveryFourChars(sale.ebmSaleData.intrlData))
+      @let(rcptSign = splitEveryFourChars(sale.ebmSaleData.rcptSign))
+      <div>Internal Data : {{intrlData}}</div>
+      <div>Receipt Signature : {{rcptSign}}</div>
+      @endif
+      <hr class="sdc-sep">
+      @let(cisDt = formatEbmCisDateTime(sale.createdAt))
+      <div>RECEIPT NUMBER : {{sale.invoiceNo}}</div>
+      <div>Date : {{cisDt.date}} time: {{cisDt.time}}</div>
+      <div>MRC: {{auth.user.mrc}}</div>
+      <hr class="sdc-sep">
+      @endif
+      <div>CIS VERSION Powered RRA VSCD EBM 2.1</div>
+    </div>
+
+    {{-- QR code (center) --}}
+    @if(sale.ebmSaleData && !isTrainingTransaction && !isProformaTransaction)
+    <img src="https://api.qrserver.com/v1/create-qr-code/?data={{encodeEbmSaleForQRCode({
+      ebmDt: sdcDt,
+      sdcId: sale.ebmSaleData.sdcId,
+      rcptNo: sale.ebmSaleData.rcptNo,
+      intrlData: sale.ebmSaleData.intrlData,
+      rcptSign: sale.ebmSaleData.rcptSign
+    })}}&size=100x100" width="100" height="100">
+    @endif
+
+    {{-- Totals tables (right) --}}
+    <div class="a4-footer-totals">
+      <table class="a4-totals-table">
+        <tr><td>Total Rwf</td><td>{{sale.totalTaxableAmount}}</td></tr>
+        @if(sale.taxableAmountA > 0)
+        <tr><td>Total {{getEbmTaxName('A')}}</td><td>{{sale.taxableAmountA}}</td></tr>
+        @endif
+        @if(sale.taxableAmountB > 0)
+        <tr><td>Total {{getEbmTaxName('B')}}</td><td>{{sale.taxableAmountB}}</td></tr>
+        @endif
+        @if(sale.taxableAmountC > 0)
+        <tr><td>Total {{getEbmTaxName('C')}}</td><td>{{sale.taxableAmountC}}</td></tr>
+        @endif
+        @if(sale.taxableAmountD > 0)
+        <tr><td>Total {{getEbmTaxName('D')}}</td><td>{{sale.taxableAmountD}}</td></tr>
+        @endif
+        <tr><td>TOTAL TAX:</td><td>{{sale.totalTaxAmount}}</td></tr>
+      </table>
+      <table class="a4-payment-table">
+        <tr><td>PAYMENT METHOD:</td><td>{{getEbmPaymentMethodDescription(sale.paymentMethod)}}</td></tr>
+        <tr><td>ITEMS NUMBER:</td><td>{{sale.totalItems}}</td></tr>
+      </table>
+    </div>
+
+  </div>
+
+
+  {{-- ================================================================ --}}
+  {{-- COPY / REFUND STYLE                                               --}}
+  {{-- ================================================================ --}}
+  @elseif(isCopyRefundStyle)
+
+  {{-- Header --}}
+  <div class="cr-header">
+    {{-- Company info (left) --}}
+    <div class="cr-header-company">
+      <div class="cr-company-name">{{auth.user.taxPayerName.toUpperCase()}}</div>
+      @if(auth.user.province)<div>{{auth.user.province.toUpperCase()}}, {{auth.user.district.toUpperCase()}}</div>@endif
+      @if(auth.user.address)<div>{{auth.user.address}}</div>@endif
+      @if(auth.user.postalBox)<div>{{auth.user.postalBox}}</div>@endif
+      @if(auth.user.email)<div>{{auth.user.email}}</div>@endif
+      @if(auth.user.phoneNumber)<div>{{auth.user.phoneNumber}}</div>@endif
+      <div>TIN N<sup>o</sup>: {{auth.user.tin}}</div>
+    </div>
+
+    {{-- Title (center) --}}
+    <div class="cr-header-title">
+      @if(isCopyTransaction)
+      <div class="cr-title-copy">COPY</div>
+      @endif
+      @if(isRefundTransaction)
+      <div class="cr-title-main">REFUND</div>
+      <div class="cr-title-ref">REF. NORMAL RECEIPT#: {{sale.invoiceNo}}</div>
+      @elseif(isTrainingTransaction)
+      <div class="cr-title-main">TRAINING MODE</div>
+      @elseif(isProformaTransaction)
+      <div class="cr-title-main">PROFORMA</div>
+      @endif
+    </div>
+
+    {{-- Logo (right) --}}
+    <div class="cr-header-logo">
+      @if(auth.user.image)
+      <img src="{{appUrl}}{{auth.user.image.url}}">
+      @elseif(auth.user.imageLink)
+      <img src="{{auth.user.imageLink}}">
+      @endif
+    </div>
+  </div>
+
+  <hr class="div-double">
+
+  @if(sale.receipt && sale.receipt.topMessage)
+  <div style="text-align:center;font-weight:bold;padding:2pt 0;">{{sale.receipt.topMessage}}</div>
+  <hr class="div-double">
+  @endif
+
+  {{-- Customer section --}}
+  <div class="cr-customer">
+    <div>
+      @if(sale.customerName)<div><strong>Customer Name:</strong> {{sale.customerName}}</div>@endif
+      @if(sale.customerTin)<div><strong>Customer Tin N<sup>o</sup>:</strong> {{sale.customerTin}}</div>@endif
+      @if(sale.receipt && sale.receipt.customerMobileNo)<div><strong>Customer Mobile N<sup>o</sup>:</strong> {{sale.receipt.customerMobileNo}}</div>@endif
+    </div>
+    @if(isRefundTransaction)
+    <div class="cr-refund-msg">REFUND IS APPROVED ONLY<br>FOR ORIGINAL SALES RECEIPT</div>
+    @endif
+  </div>
+
+  {{-- Items table --}}
+  @let(hasProductExpiry = sale.items.data.find(i => i.expirationDate))
+  @let(hasExtraHeadersCR = !!sale.extraHeaders && sale.extraHeaders.length > 0)
+  <table class="cr-items">
+    <thead>
+      <tr>
+        <th>N<sup>o</sup></th>
+        @if(hasExtraHeadersCR)
+          @each(h in sale.extraHeaders)<th>{{capitalCase(camelCase(h))}}</th>@end
+        @endif
+        <th>Product</th>
+        <th>Batch</th>
+        @if(hasProductExpiry)<th>Expiry</th>@endif
+        <th>Pkg.</th>
+        @if(isCopyTransaction)<th>Tax Des.</th>@endif
+        <th>Qty.</th>
+        <th>Price</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      @each(item in sale.items.data)
+      <tr>
+        <td>{{item.sequenceNo}}</td>
+        @if(hasExtraHeadersCR)
+          @each(h in sale.extraHeaders)<td>{{item.extra[h]}}</td>@end
+        @endif
+        <td>
+          {{item.name}}
+          @if(item.discountRate > 0)
+          <br>discount -{{item.discountRate}}% -{{item.discountAmount}}
+          @endif
+        </td>
+        <td>{{item.barcode || ''}}</td>
+        @if(hasProductExpiry)<td>{{item.expirationDate || ''}}</td>@endif
+        <td>{{item.packageUnit}}</td>
+        @if(isCopyTransaction)<td>{{getEbmTaxName(item.taxationType)}}</td>@endif
+        <td>{{item.quantity}}</td>
+        <td>{{item.price}}</td>
+        <td>
+          {{isRefundTransaction ? '-' : ''}}{{item.taxableAmount}}
+          @if(isRefundTransaction && !isCopyTransaction) {{getEbmTaxName(item.taxationType)}}@endif
+        </td>
+      </tr>
+      @end
+    </tbody>
+  </table>
+
+  {{-- THIS IS NOT AN OFFICIAL RECEIPT (copy types only) --}}
+  @if(isCopyTransaction || isTrainingTransaction || isProformaTransaction)
+  <div class="cr-not-official">THIS IS NOT AN OFFICIAL RECEIPT</div>
+  @endif
+
+  {{-- Totals --}}
+  <div class="cr-totals">
+    <table class="cr-totals-table">
+      <tr class="row-bold"><td>Total</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.totalTaxableAmount}}</td></tr>
+      @if(sale.taxableAmountA > 0)
+      <tr><td>Total {{getEbmTaxName('A')}}</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.taxableAmountA}}</td></tr>
+      @endif
+      @if(sale.taxableAmountB > 0)
+      <tr><td>Total {{getEbmTaxName('B')}}</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.taxableAmountB}}</td></tr>
+      <tr><td>Total Tax B</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.taxAmountB}}</td></tr>
+      @endif
+      @if(sale.taxableAmountC > 0)
+      <tr><td>Total {{getEbmTaxName('C')}}</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.taxableAmountC}}</td></tr>
+      <tr><td>Total Tax C</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.taxAmountC}}</td></tr>
+      @endif
+      @if(sale.taxableAmountD > 0)
+      <tr><td>Total {{getEbmTaxName('D')}}</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.taxableAmountD}}</td></tr>
+      <tr><td>Total Tax D</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.taxAmountD}}</td></tr>
+      @endif
+      <tr><td>Total Tax</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.totalTaxAmount}}</td></tr>
+      <tr class="row-sep"><td>{{getEbmPaymentMethodDescription(sale.paymentMethod)}}</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.totalTaxableAmount}}</td></tr>
+      <tr><td>ITEMS NUMBER</td><td>{{sale.totalItems}}</td></tr>
+    </table>
+  </div>
+
+  <hr class="div-double">
+
+  {{-- COPY label separator --}}
+  @if(isCopyTransaction)
+  <div class="cr-center-label">COPY</div>
+  @elseif(isTrainingTransaction)
+  <div class="cr-center-label">TRAINING MODE</div>
+  @elseif(isProformaTransaction)
+  <div class="cr-center-label">PROFORMA</div>
+  @endif
+
+  {{-- SDC INFORMATIONS --}}
+  @let(ebmDt = sale.ebmSaleData ? splitEbmDateTime(sale.ebmSaleData.vsdcRcptPbctDate) : null)
+  <div class="cr-section-header">
+    <img src="{{appUrl}}/images/rra_logo_1.png">
+    <h3>SDC INFORMATIONS</h3>
+    <img src="{{appUrl}}/images/rra_logo_1.png">
+  </div>
+  <hr class="div-double">
+
+  <div class="cr-sdc-wrap">
+    <table class="cr-sdc-table">
+      @if(ebmDt)
+      <tr><td>DATE</td><td>{{ebmDt.date}}</td></tr>
+      <tr><td>TIME</td><td>{{ebmDt.time}}</td></tr>
+      <tr><td>SRC ID</td><td>{{sale.ebmSaleData.sdcId}}</td></tr>
+      <tr><td>RECEIPT NUMBER</td><td>{{sale.ebmSaleData.rcptNo}}/{{sale.ebmSaleData.totRcptNo}} {{sale.saleType}}{{sale.receiptType}}</td></tr>
+      @if(!isTrainingTransaction && !isProformaTransaction)
+      @let(intrlData = splitEveryFourChars(sale.ebmSaleData.intrlData))
+      @let(rcptSign = splitEveryFourChars(sale.ebmSaleData.rcptSign))
+      <tr><td>INTERNAL DATA</td><td>{{intrlData}}</td></tr>
+      <tr><td>SIGNATURE</td><td>{{rcptSign}}</td></tr>
+      @endif
+      @endif
+    </table>
+
+    @if(sale.ebmSaleData && !isTrainingTransaction && !isProformaTransaction && ebmDt)
+    <img src="https://api.qrserver.com/v1/create-qr-code/?data={{encodeEbmSaleForQRCode({
+      ebmDt,
+      sdcId: sale.ebmSaleData.sdcId,
+      rcptNo: sale.ebmSaleData.rcptNo,
+      intrlData: sale.ebmSaleData.intrlData,
+      rcptSign: sale.ebmSaleData.rcptSign
+    })}}&size=100x100" width="100" height="100">
+    @endif
+  </div>
+
+  <hr class="div-double">
+
+  {{-- CIS INFORMATIONS --}}
+  <div class="cr-section-header">
+    <img src="{{appUrl}}/images/yb_group_logo.png">
+    <h3>CIS INFORMATIONS</h3>
+    <img src="{{appUrl}}/images/yb_group_logo.png">
+  </div>
+  <hr class="div-double">
+
+  @let(cisDt = formatEbmCisDateTime(sale.createdAt))
+  <table class="cr-sdc-table">
+    <tr><td>RECEIPT NUMBER</td><td>{{sale.invoiceNo}}</td></tr>
+    <tr><td>DATE</td><td>{{cisDt.date}}</td></tr>
+    <tr><td>TIME</td><td>{{cisDt.time}}</td></tr>
+    <tr><td>MRC</td><td>{{auth.user.mrc}}</td></tr>
+  </table>
+
+  <hr class="div-double">
+
+  {{-- Footer messages --}}
+  @if(sale.receipt && sale.receipt.bottomMessage)
+  <div style="text-align:center;font-weight:bold;padding:3pt 0;">{{sale.receipt.bottomMessage}}</div>
+  @else
+  <div style="text-align:center;font-weight:bold;padding:3pt 0;">Thanks see you again!</div>
+  @endif
+  <div class="cr-promo">Generated by YB VSDC API (call: {{appPhoneNumber}})(visist: {{appUrl}})</div>
+
+
+  {{-- ================================================================ --}}
+  {{-- THERMAL / ROLL 80mm                                               --}}
+  {{-- ================================================================ --}}
+  @else
+
+  <div class="roll-body">
+    <div class="roll-header">
+      <img src="{{appUrl}}/images/rra_logo_1.png" width="48" height="48">
+      <div style="font-weight:bold;font-size:9pt;">{{auth.user.taxPayerName.toUpperCase()}}</div>
+      @if(auth.user.province)<div>{{auth.user.province.toUpperCase()}}, {{auth.user.district.toUpperCase()}}</div>@endif
+      @if(auth.user.address)<div>{{auth.user.address}}</div>@endif
+      <div>TIN: {{auth.user.tin}}</div>
+      @if(auth.user.phoneNumber)<div>TEL: {{auth.user.phoneNumber}}</div>@endif
+    </div>
+
+    <hr class="roll-divider">
+
+    <div style="text-align:center;font-weight:bold;">
+      @if(isCopyTransaction)COPY @endif
+      @if(isRefundTransaction)REFUND
+      REF#: {{sale.invoiceNo}}
+      @elseif(isTrainingTransaction)TRAINING MODE
+      @elseif(isProformaTransaction)PROFORMA
+      @endif
+    </div>
+
+    @if(sale.receipt && sale.receipt.topMessage)
+    <div style="text-align:center;">{{sale.receipt.topMessage}}</div>
+    @endif
+
+    @if(sale.customerName)<div><strong>Customer:</strong> {{sale.customerName}}</div>@endif
+    @if(sale.receipt && sale.receipt.customerMobileNo)<div><strong>Tel:</strong> {{sale.receipt.customerMobileNo}}</div>@endif
+
+    <hr class="roll-divider">
+
+    @let(hasExtraRoll = !!sale.extraHeaders && sale.extraHeaders.length > 0)
+    @let(hasExpRoll = sale.items.data.find(i => i.expirationDate))
+    <table class="roll-items">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Tax</th>
+          <th>Price</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @each(item in sale.items.data)
+        <tr>
+          <td>{{item.sequenceNo}}</td>
+          <td>
+            {{item.name}}
+            @if(item.discountRate > 0)<br><small>-{{item.discountRate}}%</small>@endif
+          </td>
+          <td>{{item.quantity}}</td>
+          <td>{{getEbmTaxName(item.taxationType)}}</td>
+          <td>{{item.price}}</td>
+          <td>{{isRefundTransaction ? '-' : ''}}{{item.taxableAmount}}</td>
+        </tr>
+        @end
+      </tbody>
+    </table>
+
+    @if(isCopyTransaction || isTrainingTransaction || isProformaTransaction)
+    <div style="text-align:center;border-top:1pt solid;border-bottom:1pt solid;padding:2pt 0;font-weight:bold;margin:3pt 0;">NOT OFFICIAL RECEIPT</div>
+    @endif
+
+    <table class="roll-totals">
+      <tr class="row-bold"><td>Total</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.totalTaxableAmount}}</td></tr>
+      @if(sale.taxableAmountA > 0)
+      <tr><td>{{getEbmTaxName('A')}}</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.taxableAmountA}}</td></tr>
+      @endif
+      @if(sale.taxableAmountB > 0)
+      <tr><td>{{getEbmTaxName('B')}}</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.taxableAmountB}}</td></tr>
+      <tr><td>Tax B</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.taxAmountB}}</td></tr>
+      @endif
+      <tr><td>Total Tax</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.totalTaxAmount}}</td></tr>
+      <tr class="row-sep"><td>{{getEbmPaymentMethodDescription(sale.paymentMethod)}}</td><td>{{isRefundTransaction ? '-' : ''}}{{sale.totalTaxableAmount}}</td></tr>
+      <tr><td>ITEMS</td><td>{{sale.totalItems}}</td></tr>
+    </table>
+
+    <hr class="roll-divider">
+
+    @let(rollDt = sale.ebmSaleData ? splitEbmDateTime(sale.ebmSaleData.vsdcRcptPbctDate) : null)
+    @if(rollDt)
+    <div>DATE: {{rollDt.date}} TIME: {{rollDt.time}}</div>
+    <div>SDC: {{sale.ebmSaleData.sdcId}}</div>
+    <div>RCPT: {{sale.ebmSaleData.rcptNo}}/{{sale.ebmSaleData.totRcptNo}} {{sale.saleType}}{{sale.receiptType}}</div>
+    @if(!isTrainingTransaction && !isProformaTransaction)
+    <div>{{splitEveryFourChars(sale.ebmSaleData.intrlData)}}</div>
+    <div>{{splitEveryFourChars(sale.ebmSaleData.rcptSign)}}</div>
+    @endif
+    @endif
+    @let(rollCisDt = formatEbmCisDateTime(sale.createdAt))
+    <div>INV#: {{sale.invoiceNo}} &nbsp; MRC: {{auth.user.mrc}}</div>
+    <div>{{rollCisDt.date}} {{rollCisDt.time}}</div>
+
+    @if(sale.ebmSaleData && !isTrainingTransaction && !isProformaTransaction && rollDt)
+    <div style="text-align:center;margin-top:4pt;">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?data={{encodeEbmSaleForQRCode({
+        ebmDt: rollDt,
+        sdcId: sale.ebmSaleData.sdcId,
+        rcptNo: sale.ebmSaleData.rcptNo,
+        intrlData: sale.ebmSaleData.intrlData,
+        rcptSign: sale.ebmSaleData.rcptSign
+      })}}&size=80x80" width="80" height="80">
+    </div>
+    @endif
+
+    <hr class="roll-divider">
+    @if(sale.receipt && sale.receipt.bottomMessage)
+    <div style="text-align:center;font-weight:bold;">{{sale.receipt.bottomMessage}}</div>
+    @else
+    <div style="text-align:center;font-weight:bold;">Thanks see you again!</div>
+    @endif
+    <div style="text-align:center;color:#666;font-size:7pt;">Generated by YB VSDC API</div>
+  </div>
+
+  @endif
+
+</body>
+</html>

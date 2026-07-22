@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{title || 'Purchase Report - CIS'}}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-size: 12pt;
+    }
+
+    body {
+      font-family: 'Times New Roman', Arial, sans-serif;
+      margin: 10pt;
+      color: #000;
+    }
+
+    h1, h2 {
+      text-align: center;
+      margin: 0;
+    }
+
+    .header, .section, .totals, .footer {
+      margin-top: 5pt;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      margin: 1pt 0;
+    }
+
+    .section-title {
+      font-weight: bold;
+      margin-top: 8pt;
+      border-bottom: 1px solid #000;
+      padding-bottom: 2pt;
+    }
+
+    .totals-table, .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 5pt;
+    }
+
+    .totals-table th, .totals-table td,
+    .summary-table th, .summary-table td {
+      border: 1pt solid #000;
+      padding: 2pt;
+      text-align: left;
+    }
+
+    .totals-table td:last-child,
+    .summary-table td:last-child {
+      text-align: right;
+    }
+
+    button#printBtn {
+      display: block;
+      margin: 5pt auto;
+      padding: 3pt 6pt;
+      font-size: 12pt;
+      cursor: pointer;
+    }
+
+    header * {
+      font-size: 18pt!important;
+    }
+
+    .grand-total {
+      font-weight: bold;
+      border-top: 2px solid #000;
+    }
+
+    @media print {
+      button#printBtn {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    @if(auth.user.image)
+    <img class="image" src="{{appUrl}}{{ auth.user.image.url }}" loading="eager" />
+    @elseif(auth.user.imageLink)
+    <img class="image" src="{{ auth.user.imageLink }}" loading="eager" />
+    @endif
+
+    <h1>Purchase Report</h1>
+  </header>
+
+  <button id="printBtn" onclick="window.print()">Print Report</button>
+
+  <div class="header">
+    <div class="row"><strong>Trade Name:</strong> <span>{{auth.user.taxPayerName}}</span></div>
+    <div class="row"><strong>TIN:</strong> <span>{{auth.user.tin}}</span></div>
+    <div class="row"><strong>Generated At:</strong> <span>{{dateTime}}</span></div>
+    <div class="row"><strong>Period:</strong> <span>{{periodStart}} — {{periodEnd}}</span></div>
+    <div class="row"><strong>CIS:</strong> <span>YB VSDC</span></div>
+    <div class="row"><strong>MRC:</strong> <span>{{auth.user.mrc}}</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Summary</div>
+    <div class="row"><strong>Total Purchases:</strong> <span>{{totals.count}}</span></div>
+    <div class="row"><strong>Total Items:</strong> <span>{{totals.totalItems}}</span></div>
+    <div class="row"><strong>Total Taxable Amount:</strong> <span>RWF {{totals.totalTaxableAmount.toFixed(2)}}</span></div>
+    <div class="row"><strong>Total Tax Amount:</strong> <span>RWF {{totals.totalTaxAmount.toFixed(2)}}</span></div>
+    <div class="row"><strong>Grand Total:</strong> <span>RWF {{totals.totalAmount.toFixed(2)}}</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Purchase Details</div>
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>Invoice No</th>
+          <th>Supplier</th>
+          <th>Date</th>
+          <th>Payment</th>
+          <th>Items</th>
+          <th>Taxable Amt</th>
+          <th>Tax Amt</th>
+          <th>Total (RWF)</th>
+        </tr>
+      </thead>
+      <tbody>
+        @each(purchase in purchases)
+        <tr>
+          <td>{{purchase.invoiceNo}}</td>
+          <td>{{purchase.supplierName || '—'}}</td>
+          <td>{{purchase.purchaseDate}}</td>
+          <td>{{purchase.paymentMethod}}</td>
+          <td>{{purchase.totalItems}}</td>
+          <td>{{Number(purchase.totalTaxableAmount).toFixed(2)}}</td>
+          <td>{{Number(purchase.totalTaxAmount).toFixed(2)}}</td>
+          <td>{{Number(purchase.totalAmount).toFixed(2)}}</td>
+        </tr>
+        @else
+        <tr>
+          <td colspan="8" style="text-align:center;">No purchases found for this period.</td>
+        </tr>
+        @end
+      </tbody>
+      <tfoot>
+        <tr class="grand-total">
+          <td colspan="5">TOTALS</td>
+          <td>{{totals.totalTaxableAmount.toFixed(2)}}</td>
+          <td>{{totals.totalTaxAmount.toFixed(2)}}</td>
+          <td>{{totals.totalAmount.toFixed(2)}}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="footer" style="margin-top: 20pt;">
+    <p style="text-align:center; font-size: 10pt;">
+      CIS version 1.0, powered by RRA VSDC EBM 2.1
+      <br>
+      <small style="font-size: 6pt;">YB VSDC API</small>
+    </p>
+  </div>
+
+</body>
+</html>
